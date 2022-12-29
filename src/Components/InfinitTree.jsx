@@ -3,6 +3,7 @@ import { VariableSizeGrid as Grid } from 'react-window';
 import InfiniteLoader from "react-window-infinite-loader";
 import uniqueId from 'lodash/uniqueId'
 import Xarrow from "react-xarrows";
+import { ArcherContainer, ArcherElement } from 'react-archer';
 
 const DEMO_DATA = [
   { items: [1, 2, 3] },
@@ -36,6 +37,8 @@ const generateNewItems = (startItem, amount) => {
   return array
 }
 
+const CELL_GAP = 60
+
 const Example = () => {
   const [{ data: items, moreItemsLoading, hasNextPage }, setItems] = useState({
     data: [{ items: [START_ITEM] }].concat(generateNewItems(START_ITEM, 4)),
@@ -48,23 +51,46 @@ const Example = () => {
     const rowItem = row.items[columnIndex]
     console.log(60 * columnIndex)
     return row && rowItem && (
-      <div style={style} >
+      <div style={{
+        ...style,
+        left: columnIndex === 0 ? style.left : Number(style.left) + columnIndex * CELL_GAP,
+        right: columnIndex === items.length ? style.right : Number(style.right) + columnIndex * CELL_GAP,
+        top: rowIndex === 0 ? style.top : Number(style.top) + rowIndex * CELL_GAP,
+      }} >
         <div
           id={`item-${rowItem.id}`}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 'calc(100% - 8px)',
-            height: 'calc(100% - 8px)',
-            border: '1px solid black',
-            borderRadius: '50%'
+            width: '150px',
+            height: '250px',
           }}>
-          id: {rowItem.id}<br />
-          prevId: {rowItem.prevItemId}<br />
-          isMain: {rowItem.isMain ? '+' : '-'}<br />
-        </div>
-        {rowItem.prevItemId &&
+          <ArcherElement id={`element-${rowItem.id || 0}`}
+            relations={rowItem.prevItemId ? [
+              {
+                targetId: `element-${rowItem.prevItemId || 0}`,
+                targetAnchor: 'bottom',
+                sourceAnchor: 'top',
+              },
+            ] : undefined}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100px',
+              height: '100px',
+              border: '1px solid black',
+              borderRadius: '50%',
+            }}>
+              id: {rowItem.id}<br />
+              prevId: {rowItem.prevItemId}<br />
+              isMain: {rowItem.isMain ? '+' : '-'}<br />
+            </div>
+          </ArcherElement>
+        </div >
+
+        {/* {rowItem.prevItemId &&
           <Xarrow
             start={`item-${rowItem.id}`}
             end={`item-${rowItem.prevItemId}`}
@@ -74,8 +100,9 @@ const Example = () => {
             showHead={false}
             showTail={false}
           />
-        }
-      </div>)
+        } */}
+      </div >
+    )
   };
 
   const loadMore = useCallback(
@@ -105,30 +132,32 @@ const Example = () => {
       loadMoreItems={loadMore}
     >
       {({ onItemsRendered, ref }) => (
-        <Grid
-          columnCount={Math.max(...DEMO_DATA.map(item => item.items.length))}
-          columnWidth={index => 100}
-          height={1000}
-          rowCount={items.length}
-          rowHeight={index => 100}
-          width={1000}
-          onItemsRendered={({
-            visibleRowStartIndex,
-            visibleRowStopIndex,
-            overscanRowStopIndex,
-            overscanRowStartIndex,
-          }) => {
-            onItemsRendered({
-              overscanStartIndex: overscanRowStartIndex,
-              overscanStopIndex: overscanRowStopIndex,
-              visibleStartIndex: visibleRowStartIndex,
-              visibleStopIndex: visibleRowStopIndex,
-            });
-          }}
-          ref={ref}
-        >
-          {Cell}
-        </Grid>
+        <ArcherContainer endMarker={false} lineStyle="straight">
+          <Grid
+            columnCount={Math.max(...DEMO_DATA.map(item => item.items.length))}
+            columnWidth={index => 100}
+            height={1000}
+            rowCount={items.length}
+            rowHeight={index => 100}
+            width={1000}
+            onItemsRendered={({
+              visibleRowStartIndex,
+              visibleRowStopIndex,
+              overscanRowStopIndex,
+              overscanRowStartIndex,
+            }) => {
+              onItemsRendered({
+                overscanStartIndex: overscanRowStartIndex,
+                overscanStopIndex: overscanRowStopIndex,
+                visibleStartIndex: visibleRowStartIndex,
+                visibleStopIndex: visibleRowStopIndex,
+              });
+            }}
+            ref={ref}
+          >
+            {Cell}
+          </Grid>
+        </ArcherContainer>
       )}
 
     </InfiniteLoader>
